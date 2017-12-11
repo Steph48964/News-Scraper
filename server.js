@@ -11,7 +11,8 @@ var axios = require("axios");
 var db = require("./models");
 
 var PORT = 3000;
-
+var env = process.env.NODE_ENV || 'development';
+var dbURL = '';
 var app = express();
 
 app.use(logger("dev"));
@@ -19,9 +20,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 mongoose.Promise = Promise;
-mongoose.connect("mongodb://localhost/week18Populater", {
+if (env == 'development') {
+  dbURL = 'mongodb://localhost/week18Populater';
+} else {
+  dbURL = process.env['MONGODB_URI'];
+}
+mongoose.connect(dbURL, {
   useMongoClient: true
 });
+console.log('connect to mongo at:', dbURL);
 
 app.get("/scrape", function(req, res) {
   axios.get("http://www.echojs.com/").then(function(response) {
