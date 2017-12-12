@@ -20,38 +20,49 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 mongoose.Promise = Promise;
-if (env == 'development') {
-  dbURL = 'mongodb://localhost/week18Populater';
-} else {
-  dbURL = process.env['MONGODB_URI'];
-}
+// if (env == 'development') {
+//   dbURL = 'mongodb://localhost/week18Populater';
+// } else {
+//   dbURL = process.env['MONGODB_URI'];
+// }
+dbURL = 'mongodb://heroku_9p7k661k:bmnk7idnhbm0ldj7h1r7bssita@ds135966.mlab.com:35966/heroku_9p7k661k'
 mongoose.connect(dbURL, {
   useMongoClient: true
 });
 console.log('connect to mongo at:', dbURL);
 
+
 app.get("/scrape", function(req, res) {
-  axios.get("http://www.echojs.com/").then(function(response) {
+  axios.get("https://www.npr.org").then(function(response) {
     var $ = cheerio.load(response.data);
 
-    $("article h2").each(function(i, element) {
+    $("article .story-wrap .story-text").each(function(i, element) {
       var result = {};
 
-      result.title = $(this)
+      result.headline = $(this)
         .children("a")
+        .children(".title")
         .text();
       result.link = $(this)
         .children("a")
         .attr("href");
+      result.summary = $(this)
+        .first(".teaser")
+        .text();
 
-      db.Article
-        .create(result)
-        .then(function(dbArticle) {
-          res.send("Scrape Complete");
-        })
-        .catch(function(err) {
-          res.json(err);
-        });
+          console.log('result:', result);
+      if (result.headline && result.link) {
+        db.Article
+          .create(result)
+          .then(function(dbArticle) {
+            //res.send("Scrape Complete");
+            console.log('db article saved');
+          })
+          .catch(function(err) {
+            //res.json(err);
+            console.log('error:', err);
+          });
+        }
     });
   });
 });
